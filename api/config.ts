@@ -26,6 +26,7 @@ export const META_SESSION_ID = "com.vespper/session-id";
 export const META_BATCH_ID = "com.vespper/batch-id";
 export const META_EDIT_INDEX = "com.vespper/edit-index";
 export const AVAILABLE_MODELS = [
+  "openai/gpt-5.6-sol",
   "openai/gpt-5.5",
   "anthropic/claude-sonnet-4.5",
   "google/gemini-2.5-flash",
