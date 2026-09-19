@@ -41,7 +41,6 @@ want to use:
 ```bash
 VESPPER_API_KEY=sk_live_your_key_here
 VESPPER_MCP_URL=https://mcp.vespper.com/mcp
-
 OPENAI_API_KEY=sk-your_openai_key_here
 ```
 
