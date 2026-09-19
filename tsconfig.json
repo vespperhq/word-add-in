@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@mastra/core/agent": ["./node_modules/@mastra/core/dist/agent/agent"],
+      "@mastra/core/tools": ["./node_modules/@mastra/core/dist/tools/tool"]
+    }
+  },
+  "include": ["api/**/*.ts"]
+}

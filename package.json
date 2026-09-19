@@ -1,0 +1,56 @@
+{
+  "name": "vespper-word-add-in",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sample Word add-in: Office.js → local HTTPS server → vespper-docx-mcp",
+  "scripts": {
+    "dev": "npm run dev-server",
+    "dev-server": "webpack --config webpack.config.cjs --mode development && concurrently -k \"webpack --config webpack.config.cjs --mode development --watch\" \"tsx api/server.ts\"",
+    "build:addin": "webpack --config webpack.config.cjs --mode development",
+    "watch:addin": "webpack --config webpack.config.cjs --mode development --watch",
+    "start": "office-addin-debugging start add-in/manifest.xml desktop --app word --dev-server \"npm run dev-server\" --dev-server-port 3100 --debug-method direct --no-live-reload",
+    "stop": "office-addin-debugging stop add-in/manifest.xml",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.taskpane.json --noEmit",
+    "setup:certs": "office-addin-dev-certs install --machine",
+    "setup:certs:check": "office-addin-dev-certs verify"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "dependencies": {
+    "@mastra/core": "1.38.0",
+    "@mastra/mcp": "1.17.2",
+    "@streamparser/json": "0.0.26",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^2.0.1",
+    "office-addin-dev-certs": "^1.13.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "swr": "^2.3.6",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^26.0.1",
+    "@types/office-js": "^1.0.377",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "concurrently": "^9.2.1",
+    "css-loader": "^7.1.5",
+    "mini-css-extract-plugin": "^2.10.2",
+    "office-addin-debugging": "^6.0.0",
+    "postcss": "^8.5.28",
+    "postcss-loader": "^8.2.1",
+    "tailwindcss": "^4.3.3",
+    "ts-loader": "^9.5.4",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^6.0.1"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+.env
+add-in/taskpane.js
+add-in/taskpane.js.map
+add-in/taskpane.css
+add-in/taskpane.css.map
