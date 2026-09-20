@@ -10,7 +10,7 @@
   <ProviderName>Vespper</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Vespper DOCX Editor"/>
-  <Description DefaultValue="Send the open Word document to the Vespper API and apply tracked-change edits."/>
+  <Description DefaultValue="Send the open Word document to the Vespper API and follow its Track Changes setting."/>
   <IconUrl DefaultValue="https://localhost:3100/assets/vespper-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3100/assets/vespper-64.png"/>
   <SupportUrl DefaultValue="https://docs.vespper.com"/>
@@ -88,7 +88,7 @@
         <bt:String id="TaskpaneButton.Label" DefaultValue="Vespper"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Apply Vespper tracked-change edits to the open document."/>
+        <bt:String id="GetStarted.Description" DefaultValue="Apply Vespper edits to the open document."/>
         <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Open the Vespper task pane"/>
       </bt:LongStrings>
     </Resources>

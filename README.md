@@ -84,7 +84,12 @@ npm stop
 
 That's it. You should see the document being changed.
 
-The settings button lets you change the tracked-change author from the default `Vespper Agent`.
+The add-in follows Word's current **Track Changes** setting. When tracking is
+on (`TrackAll` or `TrackMineOnly`), new edits are returned as tracked changes.
+When it is off, they are applied directly.
+
+The settings button lets you change the tracked-change author used in
+tracked mode from the default `Vespper Agent`.
 
 ## Development commands
 
