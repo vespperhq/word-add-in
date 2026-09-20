@@ -11,6 +11,7 @@ import {
   META_BATCH_ID,
   META_EDIT_INDEX,
   META_SESSION_ID,
+  META_TRACK_CHANGES,
   WORD_AGENT_REASONING_EFFORT,
   WORD_AGENT_REASONING_SUMMARY,
 } from "./config";
@@ -31,7 +32,7 @@ Your job is to apply the requested changes to the document using the tools avail
 
 Hard requirements:
 - Edit the existing document. Do NOT regenerate it from scratch. Preserve all formatting, styles, headings, tables, numbering, headers/footers, images, and any content not explicitly targeted by the instruction.
-- Use OOXML tracked changes (w:ins for insertions, w:del for deletions) for any visible content modification. Author = "Vespper". Do not silently rewrite content.
+- Apply visible content modifications through edit_document. The add-in configures whether they appear as tracked changes or directly in place.
 - Make the smallest, most surgical edits that satisfy the instruction.
 
 Use the tools available to you to read, navigate, and edit the document.`;
@@ -108,6 +109,7 @@ export async function* runAgentTurn(opts: RunAgentTurnOptions) {
                 [META_BATCH_ID]: toolCallId,
                 [META_EDIT_INDEX]: index,
                 [META_AUTHOR]: opts.author,
+                [META_TRACK_CHANGES]: opts.trackChanges,
               },
               abortSignal,
             }
@@ -177,6 +179,7 @@ export async function* runAgentTurn(opts: RunAgentTurnOptions) {
               [META_SESSION_ID]: session.id,
               [META_BATCH_ID]: batchId,
               [META_AUTHOR]: opts.author,
+              [META_TRACK_CHANGES]: opts.trackChanges,
             },
             abortSignal: context.abortSignal,
           })

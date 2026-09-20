@@ -143,6 +143,15 @@ export function getDocumentBytes(): Promise<Uint8Array<ArrayBuffer>> {
 
 export type TrackingMode = Word.Document["changeTrackingMode"];
 
+export async function getTrackChanges(): Promise<boolean> {
+  return Word.run(async (context) => {
+    const doc = context.document;
+    doc.load("changeTrackingMode");
+    await context.sync();
+    return doc.changeTrackingMode !== Word.ChangeTrackingMode.off;
+  });
+}
+
 export async function applyDocxToWord(
   data: ArrayBuffer | Uint8Array,
   restoreMode?: TrackingMode | null
@@ -158,10 +167,7 @@ export async function applyDocxToWord(
     doc.changeTrackingMode = Word.ChangeTrackingMode.off;
     doc.body.insertFileFromBase64(base64, Word.InsertLocation.replace);
     await context.sync();
-    doc.changeTrackingMode =
-      previousMode === Word.ChangeTrackingMode.off
-        ? Word.ChangeTrackingMode.trackAll
-        : previousMode;
+    doc.changeTrackingMode = previousMode;
     await context.sync();
   });
 }

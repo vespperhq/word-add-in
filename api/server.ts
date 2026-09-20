@@ -101,6 +101,7 @@ app.post(
     }
     const author = String(req.body.author ?? DOCX_AUTHOR).trim();
     const model = String(req.body.model || DEFAULT_MODEL);
+    const trackChangesValue = String(req.body.trackChanges ?? "true");
     const filename = req.file.originalname || "document.docx";
     const docBytes = req.file.buffer;
 
@@ -115,6 +116,12 @@ app.post(
           "Tracked-change author is required. Set it in the task pane or DOCX_AUTHOR in .env.",
       });
     }
+    if (!["true", "false"].includes(trackChangesValue)) {
+      return res.status(400).json({
+        error: "trackChanges must be 'true' or 'false'.",
+      });
+    }
+    const trackChanges = trackChangesValue === "true";
     if (!hasModelApiKey(model)) {
       const keyNames = getModelApiKeyNames(model);
       return res.status(500).json({
@@ -125,7 +132,7 @@ app.post(
     }
 
     console.log(
-      `[process] agent file=${filename} bytes=${docBytes.length} model=${model}`,
+      `[process] agent file=${filename} bytes=${docBytes.length} model=${model} trackChanges=${trackChanges}`,
     );
 
     res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
@@ -143,6 +150,7 @@ app.post(
       messages,
       author,
       model,
+      trackChanges,
       mcpUrl: VESPPER_MCP_URL,
       apiKey: VESPPER_API_KEY,
       signal: abortController.signal,

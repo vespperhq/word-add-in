@@ -27,7 +27,8 @@ export function Conversation() {
           <p className="mt-2 mb-0 text-[13px] leading-relaxed text-muted-foreground">
             Ask me to edit the open document — e.g.{" "}
             <em>“Replace every occurrence of DFAT with Hello”</em>. I&apos;ll
-            read it via MCP, make tracked changes, and show my work here.{" "}
+            read it via MCP, follow your current Track Changes setting, and show
+            my work here.{" "}
             <strong>Save the document first</strong> (⌘S).
           </p>
         </div>

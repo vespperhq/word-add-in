@@ -4,6 +4,7 @@ import {
   applyDocxToWord,
   base64ToArrayBuffer,
   getDocumentBytes,
+  getTrackChanges,
 } from "../office/document";
 import {
   applyTraceEvents,
@@ -157,6 +158,7 @@ export function useChatConversation({
     };
 
     try {
+      const trackChanges = await getTrackChanges();
       const bytes = await getDocumentBytes();
       if (thisRun.controller.signal.aborted) {
         throw new DOMException("Aborted", "AbortError");
@@ -167,6 +169,7 @@ export function useChatConversation({
         messages: history,
         author: trackedAuthor,
         model,
+        trackChanges,
         signal: thisRun.controller.signal,
         onEvent: queueTraceEvent,
         onDocument: async ({ docx_b64 }) => {

@@ -136,6 +136,7 @@ export interface RunAgentTurnOptions {
   author: string;
   mcpUrl: string;
   apiKey: string;
+  trackChanges: boolean;
   model?: string;
   signal?: AbortSignal;
 }

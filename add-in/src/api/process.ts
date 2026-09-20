@@ -14,6 +14,7 @@ export type ProcessArg = {
   messages: ChatMessage[];
   author: string;
   model: string;
+  trackChanges: boolean;
   signal: AbortSignal;
   onEvent: (event: TraceEvent) => void;
   onDocument: (update: DocumentUpdate) => Promise<void>;
@@ -85,6 +86,7 @@ export async function sendProcess(
   form.append("messages", JSON.stringify(arg.messages));
   form.append("author", arg.author);
   form.append("model", arg.model);
+  form.append("trackChanges", String(arg.trackChanges));
 
   const local = new AbortController();
   const onAbort = () => local.abort();
