@@ -87,6 +87,58 @@ function closeReasoning(turn: Turn, endedAt: number): Turn {
   };
 }
 
+function closeEmptyText(turn: Turn): Turn {
+  const last = turn.parts[turn.parts.length - 1];
+  if (last?.kind !== "text" || last.text) return turn;
+  return { ...turn, parts: turn.parts.slice(0, -1) };
+}
+
+function beginBlock(turn: Turn, endedAt: number): Turn {
+  return closeEmptyText(closeReasoning(turn, endedAt));
+}
+
+function withTextSummary(turn: Turn): Turn {
+  return {
+    ...turn,
+    summary: turn.parts
+      .filter((part) => part.kind === "text")
+      .map((part) => part.text ?? "")
+      .join(""),
+  };
+}
+
+function nextTextPartId(parts: TracePart[], sourceId?: string): string {
+  const base = sourceId ? `text-${sourceId}` : "text";
+  if (!parts.some((part) => part.id === base)) return base;
+  let n = 2;
+  while (parts.some((part) => part.id === `${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
+function appendTextDelta(
+  turn: Turn,
+  sourceId: string | undefined,
+  delta: string
+): Turn {
+  const last = turn.parts[turn.parts.length - 1];
+  if (last?.kind === "text") {
+    return withTextSummary({
+      ...turn,
+      parts: upsertPart(turn.parts, {
+        ...last,
+        text: (last.text ?? "") + delta,
+      }),
+    });
+  }
+  return withTextSummary({
+    ...turn,
+    parts: [
+      ...turn.parts,
+      { id: nextTextPartId(turn.parts, sourceId), kind: "text", text: delta },
+    ],
+  });
+}
+
 function buildUserText(instruction: string, selectedContent?: string): string {
   const request = instruction.trim();
   const selection = selectedContent?.trim();
@@ -138,7 +190,7 @@ export function applyTraceEvent(turn: Turn, msg: TraceEvent): Turn {
     case TraceEventType.REASONING_START: {
       const id = getReasoningPartId(msg.payload.id);
       if (turn.parts.some((part) => part.id === id)) return turn;
-      const next = closeReasoning(turn, receivedAt);
+      const next = beginBlock(turn, receivedAt);
       return {
         ...next,
         parts: [
@@ -203,13 +255,33 @@ export function applyTraceEvent(turn: Turn, msg: TraceEvent): Turn {
         }),
       };
     }
-    case TraceEventType.TEXT_DELTA:
+    case TraceEventType.TEXT_START: {
+      const next = beginBlock(turn, receivedAt);
       return {
-        ...closeReasoning(turn, receivedAt),
-        summary: turn.summary + msg.payload.text,
+        ...next,
+        parts: [
+          ...next.parts,
+          {
+            id: nextTextPartId(next.parts, msg.payload.id),
+            kind: "text",
+            text: "",
+          },
+        ],
       };
+    }
+    case TraceEventType.TEXT_DELTA: {
+      const delta = msg.payload.text ?? "";
+      if (!delta) return turn;
+      return appendTextDelta(
+        closeReasoning(turn, receivedAt),
+        msg.payload.id,
+        delta
+      );
+    }
+    case TraceEventType.TEXT_END:
+      return closeEmptyText(turn);
     case TraceEventType.TOOL_CALL_INPUT_STREAMING_START: {
-      const next = closeReasoning(turn, receivedAt);
+      const next = beginBlock(turn, receivedAt);
       const { toolCallId: id, toolName } = msg.payload;
       const p = {
         ...getToolPart(next, id, toolName),
@@ -221,7 +293,7 @@ export function applyTraceEvent(turn: Turn, msg: TraceEvent): Turn {
       return { ...next, parts: upsertPart(next.parts, p) };
     }
     case TraceEventType.TOOL_CALL_DELTA: {
-      const next = closeReasoning(turn, receivedAt);
+      const next = beginBlock(turn, receivedAt);
       const { argsTextDelta = "", toolCallId: id, toolName } = msg.payload;
       const p = {
         ...getToolPart(next, id, toolName),
@@ -234,7 +306,7 @@ export function applyTraceEvent(turn: Turn, msg: TraceEvent): Turn {
       return { ...next, parts: upsertPart(next.parts, p) };
     }
     case TraceEventType.TOOL_CALL: {
-      const next = closeReasoning(turn, receivedAt);
+      const next = beginBlock(turn, receivedAt);
       const { args, toolCallId: id, toolName } = msg.payload;
       const p = {
         ...getToolPart(next, id, toolName),
@@ -261,7 +333,7 @@ export function applyTraceEvent(turn: Turn, msg: TraceEvent): Turn {
       return { ...next, parts: upsertPart(next.parts, p) };
     }
     case TraceEventType.TOOL_RESULT: {
-      const next = closeReasoning(turn, receivedAt);
+      const next = beginBlock(turn, receivedAt);
       const { result, toolCallId: id, toolName } = msg.payload;
       const p = {
         ...getToolPart(next, id, toolName),
@@ -281,7 +353,7 @@ export function applyTraceEvent(turn: Turn, msg: TraceEvent): Turn {
       return { ...next, parts: upsertPart(next.parts, p) };
     }
     case TraceEventType.TOOL_ERROR: {
-      const next = closeReasoning(turn, receivedAt);
+      const next = beginBlock(turn, receivedAt);
       const { error, toolCallId: id, toolName } = msg.payload;
       const p = {
         ...getToolPart(next, id, toolName),
@@ -300,7 +372,7 @@ export function applyTraceEvent(turn: Turn, msg: TraceEvent): Turn {
       return { ...next, parts: upsertPart(next.parts, p) };
     }
     case TraceEventType.ERROR: {
-      const next = closeReasoning(turn, receivedAt);
+      const next = beginBlock(turn, receivedAt);
       const err = msg.payload?.error ?? msg.payload?.detail ?? msg.detail;
       return {
         ...next,
@@ -308,7 +380,7 @@ export function applyTraceEvent(turn: Turn, msg: TraceEvent): Turn {
       };
     }
     case TraceEventType.FINISH:
-      return closeReasoning(turn, receivedAt);
+      return beginBlock(turn, receivedAt);
     default:
       return turn;
   }

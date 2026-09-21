@@ -17,7 +17,9 @@ export enum TraceEventType {
   REASONING_START = "reasoning-start",
   REASONING_DELTA = "reasoning-delta",
   REASONING_END = "reasoning-end",
+  TEXT_START = "text-start",
   TEXT_DELTA = "text-delta",
+  TEXT_END = "text-end",
   TOOL_CALL_INPUT_STREAMING_START = "tool-call-input-streaming-start",
   TOOL_CALL_DELTA = "tool-call-delta",
   TOOL_CALL = "tool-call",
@@ -29,7 +31,7 @@ export enum TraceEventType {
 
 export type TracePart = {
   id: string;
-  kind: "tool" | "reasoning";
+  kind: "tool" | "reasoning" | "text";
   name?: string;
   state?: ToolState;
   text?: string;
@@ -73,11 +75,18 @@ type ToolPayload = {
   isError?: boolean;
 };
 
+type TextPayload = {
+  id?: string;
+  text?: string;
+};
+
 type TraceEventData =
   | { type: TraceEventType.REASONING_START; payload: ReasoningPayload }
   | { type: TraceEventType.REASONING_DELTA; payload: ReasoningPayload }
   | { type: TraceEventType.REASONING_END; payload: ReasoningPayload }
-  | { type: TraceEventType.TEXT_DELTA; payload: { id?: string; text: string } }
+  | { type: TraceEventType.TEXT_START; payload: TextPayload }
+  | { type: TraceEventType.TEXT_DELTA; payload: TextPayload }
+  | { type: TraceEventType.TEXT_END; payload: TextPayload }
   | {
       type: TraceEventType.TOOL_CALL_INPUT_STREAMING_START;
       payload: ToolPayload;
