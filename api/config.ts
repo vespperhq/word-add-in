@@ -30,6 +30,7 @@ export const AVAILABLE_MODELS = [
   "openai/gpt-5.6-sol",
   "openai/gpt-5.5",
   "anthropic/claude-sonnet-4.5",
+  "anthropic/claude-opus-5",
   "google/gemini-2.5-flash",
   "google/gemini-2.5-pro",
 ] as const;

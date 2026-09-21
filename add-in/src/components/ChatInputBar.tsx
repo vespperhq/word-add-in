@@ -12,6 +12,7 @@ const MODEL_LABELS: Record<string, string> = {
   "gpt-5.5": "GPT 5.5",
   "gpt-5.6-sol": "GPT 5.6 Sol",
   "claude-sonnet-4.5": "Claude Sonnet 4.5",
+  "claude-opus-5": "Claude Opus 5",
   "gemini-2.5-flash": "Gemini 2.5 Flash",
   "gemini-2.5-pro": "Gemini 2.5 Pro",
 };
