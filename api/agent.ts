@@ -4,24 +4,20 @@ import { finished } from "node:stream/promises";
 import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
 import { MCPClient } from "@mastra/mcp";
+import Vespper from "vespper";
 import {
   DEFAULT_MODEL,
   MAX_ROUNDS,
-  META_AUTHOR,
   META_BATCH_ID,
   META_EDIT_INDEX,
-  META_SESSION_ID,
-  META_TRACK_CHANGES,
   WORD_AGENT_REASONING_EFFORT,
   WORD_AGENT_REASONING_SUMMARY,
 } from "./config";
 import { createEditInputParser } from "./edit-input";
-import { closeDocumentSession, openDocumentSession } from "./http";
 import {
   CommittedDocumentSchema,
   McpToolResultSchema,
   type ActiveEditInput,
-  type CommittedDocument,
   type EditPair,
   type RunAgentTurnOptions,
 } from "./types";
@@ -38,55 +34,50 @@ Hard requirements:
 Use the tools available to you to read, navigate, and edit the document.`;
 
 export async function* runAgentTurn(opts: RunAgentTurnOptions) {
-  const session = await openDocumentSession({
-    mcpUrl: opts.mcpUrl,
+  const client = new Vespper({
     apiKey: opts.apiKey,
-    document: opts.docBytes,
-    signal: opts.signal,
+    mcpUrl: opts.mcpUrl,
   });
+  const sessionId = await client.openSession(opts.docBytes);
   const mcp = new MCPClient({
     id: randomUUID(),
     servers: {
       vespperDocx: {
-        url: new URL(opts.mcpUrl),
+        url: new URL(client.mcpUrl),
         requestInit: {
-          headers: { Authorization: `Bearer ${opts.apiKey}` },
+          headers: { Authorization: client.authorizationHeader },
         },
       },
     },
   });
+  let editCount = 0;
+  const output = new PassThrough({ objectMode: true });
+  const childCalls: Promise<unknown>[] = [];
+  let activeInput: ActiveEditInput | undefined;
+
   try {
+    await client.patchMCPTools({
+      mcp,
+      sessionId,
+      author: opts.author,
+      trackChanges: opts.trackChanges,
+      onDocumentUpdated(update) {
+        output.write({
+          type: "edit_applied",
+          docx_b64: Buffer.from(update.document).toString("base64"),
+          edit_count: update.editCount,
+          revision: update.revision,
+        });
+      },
+    });
     const tools: any = await mcp.listTools();
-    const mcpRead = tools.vespperDocx_read_document;
-    const mcpSearch = tools.vespperDocx_search_document;
+    const read_document = tools.vespperDocx_read_document;
+    const search_document = tools.vespperDocx_search_document;
     const mcpEdit = tools.vespperDocx_edit_document;
-    if (!mcpRead || !mcpSearch || !mcpEdit) {
+    if (!read_document || !search_document || !mcpEdit) {
       throw new Error(
-        "MCP server did not advertise read_document, search_document, and edit_document"
+        "MCP server did not advertise read_document, search_document, and edit_document",
       );
-    }
-
-    let docx_b64 = opts.docBytes.toString("base64");
-    let editCount = 0;
-    let latestRevision = session.revision;
-    const output = new PassThrough({ objectMode: true });
-    const childCalls: Promise<void>[] = [];
-    let activeInput: ActiveEditInput | undefined;
-
-    function publishDocument(out: unknown): CommittedDocument | undefined {
-      const parsed = CommittedDocumentSchema.safeParse(out);
-      if (!parsed.success) return;
-      const { base64, revision, count } = parsed.data;
-      if (revision <= latestRevision) return parsed.data;
-      latestRevision = revision;
-      docx_b64 = base64;
-      output.write({
-        type: "edit_applied",
-        docx_b64: base64,
-        edit_count: count,
-        revision,
-      });
-      return parsed.data;
     }
 
     function clearInput(toolCallId: string): void {
@@ -97,7 +88,7 @@ export async function* runAgentTurn(opts: RunAgentTurnOptions) {
       toolCallId: string,
       abortSignal: AbortSignal | undefined,
       index: number,
-      edit: EditPair
+      edit: EditPair,
     ): void {
       childCalls.push(
         mcpEdit
@@ -105,44 +96,19 @@ export async function* runAgentTurn(opts: RunAgentTurnOptions) {
             { edits: [edit] },
             {
               _meta: {
-                [META_SESSION_ID]: session.id,
                 [META_BATCH_ID]: toolCallId,
                 [META_EDIT_INDEX]: index,
-                [META_AUTHOR]: opts.author,
-                [META_TRACK_CHANGES]: opts.trackChanges,
               },
               abortSignal,
-            }
+            },
           )
-          .then((out: unknown) => void publishDocument(out))
           .catch(() => {
-            // The final call starts a missing candidate or reports its failure.
-          })
+            // Handle the rejection now; the final call starts a missing
+            // candidate or reports its failure.
+          }),
       );
     }
 
-    const sessionMeta = { [META_SESSION_ID]: session.id };
-
-    const read_document = createTool({
-      id: "read_document",
-      description: mcpRead.description,
-      inputSchema: mcpRead.inputSchema,
-      execute: async (input, context) =>
-        mcpRead.execute(input, {
-          _meta: sessionMeta,
-          abortSignal: context.abortSignal,
-        }),
-    });
-    const search_document = createTool({
-      id: "search_document",
-      description: mcpSearch.description,
-      inputSchema: mcpSearch.inputSchema,
-      execute: async (input, context) =>
-        mcpSearch.execute(input, {
-          _meta: sessionMeta,
-          abortSignal: context.abortSignal,
-        }),
-    });
     const edit_document = createTool({
       id: "edit_document",
       description: mcpEdit.description,
@@ -176,17 +142,14 @@ export async function* runAgentTurn(opts: RunAgentTurnOptions) {
         const out = McpToolResultSchema.parse(
           await mcpEdit.execute(input, {
             _meta: {
-              [META_SESSION_ID]: session.id,
               [META_BATCH_ID]: batchId,
-              [META_AUTHOR]: opts.author,
-              [META_TRACK_CHANGES]: opts.trackChanges,
             },
             abortSignal: context.abortSignal,
-          })
+          }),
         );
-        const committed = publishDocument(out);
+        const committed = CommittedDocumentSchema.safeParse(out);
         const { base64: _base64, ...modelResult } = out;
-        if (committed) editCount += committed.count;
+        if (committed.success) editCount += committed.data.count;
         return modelResult;
       },
     });
@@ -221,12 +184,14 @@ export async function* runAgentTurn(opts: RunAgentTurnOptions) {
         await Promise.allSettled(childCalls);
         output.end({
           type: "done",
-          docx_b64,
+          docx_b64: Buffer.from(client.getSessionDocument(sessionId)).toString(
+            "base64",
+          ),
           edit_count: editCount,
         });
       } catch (error) {
         output.destroy(
-          error instanceof Error ? error : new Error(String(error))
+          error instanceof Error ? error : new Error(String(error)),
         );
       }
     })();
@@ -238,15 +203,13 @@ export async function* runAgentTurn(opts: RunAgentTurnOptions) {
     await completion;
   } finally {
     try {
-      await closeDocumentSession({
-        mcpUrl: opts.mcpUrl,
-        apiKey: opts.apiKey,
-        sessionId: session.id,
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
       await mcp.disconnect();
+    } finally {
+      try {
+        await client.closeSession(sessionId);
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
 }

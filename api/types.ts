@@ -75,7 +75,7 @@ export function parseChatMessages(raw: unknown): ChatMessage[] {
   const parsed = ChatMessagesSchema.safeParse(decoded);
   if (!parsed.success) {
     throw new Error(
-      parsed.error.issues[0]?.message ?? "unknown validation error"
+      parsed.error.issues[0]?.message ?? "unknown validation error",
     );
   }
   return parsed.data;
@@ -87,18 +87,6 @@ export const EditPairSchema = z.object({
 });
 
 export type EditPair = z.infer<typeof EditPairSchema>;
-
-export const DocumentSessionSchema = z
-  .object({
-    session_id: z.string().min(1),
-    current_revision: z.number().int().nonnegative(),
-  })
-  .transform(({ session_id, current_revision }) => ({
-    id: session_id,
-    revision: current_revision,
-  }));
-
-export type DocumentSession = z.infer<typeof DocumentSessionSchema>;
 
 export const McpToolResultSchema = z.record(z.string(), z.unknown());
 

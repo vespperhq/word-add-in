@@ -21,9 +21,6 @@ export const WORD_AGENT_REASONING_EFFORT =
 export const WORD_AGENT_REASONING_SUMMARY =
   process.env.WORD_AGENT_REASONING_SUMMARY || "detailed";
 
-export const META_AUTHOR = "com.vespper/author";
-export const META_TRACK_CHANGES = "com.vespper/track-changes";
-export const META_SESSION_ID = "com.vespper/session-id";
 export const META_BATCH_ID = "com.vespper/batch-id";
 export const META_EDIT_INDEX = "com.vespper/edit-index";
 export const AVAILABLE_MODELS = [

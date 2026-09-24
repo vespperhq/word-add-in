@@ -1,11 +1,13 @@
 # Vespper Word add-in
 
-A complete Microsoft Word add-in example that connects a Mastra agent to [Vespper](https://vespper.com).
+A complete Microsoft Word add-in example that connects a Mastra agent to
+[Vespper](https://vespper.com) through the Vespper TypeScript SDK.
 
 The example add-in includes the following features:
 
 - Streamed edits
 - Tracked changes
+- Automatic MCP session metadata and document retention
 - Selected-text context
 - Pasted image context
 - Multi-model selection
@@ -90,6 +92,17 @@ When it is off, they are applied directly.
 
 The settings button lets you change the tracked-change author used in
 tracked mode from the default `Vespper Agent`.
+
+## How the Vespper integration works
+
+The API server opens and closes each document session with the `vespper` SDK.
+It auto-patches Mastra's MCP tools so document reads, searches, and edits carry
+the correct session, author, and tracked-change metadata.
+
+The example wraps the patched `edit_document` tool once more to parse streamed
+edit arguments. It adds only the batch ID and edit index needed for incremental
+editing; the SDK still supplies the ordinary Vespper metadata and retains every
+new document revision.
 
 ## Development commands
 
