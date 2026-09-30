@@ -12,6 +12,8 @@ The example add-in includes the following features:
 - Pasted image context
 - Multi-model selection
 
+This example is also available through [Vespper Examples](https://github.com/vespperhq/examples).
+
 ## Prerequisites
 
 - Microsoft Word desktop for macOS or Windows
@@ -28,9 +30,10 @@ The example add-in includes the following features:
 
 ## 2. Install the example
 
-From the repository root:
+Clone this repository, then install the dependencies:
 
 ```bash
+git clone https://github.com/vespperhq/word-add-in.git
 cd word-add-in
 npm install
 cp .env.example .env
@@ -135,3 +138,11 @@ word-add-in/
 ## License
 
 [MIT](./LICENSE)
+
+## Updating the examples collection
+
+Push changes to this repository normally. The workflow in
+[Vespper Examples](https://github.com/vespperhq/examples) checks all of its
+submodules every five minutes and updates their pointers automatically.
+No workflow or secret is required in this repository. GitHub may delay scheduled
+runs, so an update can take longer than five minutes.
