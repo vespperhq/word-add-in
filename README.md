@@ -14,6 +14,10 @@ The example add-in includes the following features:
 
 This example is also available through [Vespper Examples](https://github.com/vespperhq/examples).
 
+## Demo video
+
+[![Watch the Word add-in demo on YouTube](https://img.youtube.com/vi/xuJ7OsZ5I04/maxresdefault.jpg)](https://youtu.be/xuJ7OsZ5I04)
+
 ## Prerequisites
 
 - Microsoft Word desktop for macOS or Windows
